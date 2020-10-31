@@ -1,27 +1,48 @@
-stage("Build Info") {
-  node {
-    def commit = checkout scm
-    echo "Latest commit id: ${commit.GIT_COMMIT}"
-  }
+node {
+  stage("Build") {
+    withPod {
+      node('random') {
+        def tag = "${env.BRANCH_NAME}.${env.BUILD_NUMBER}"
+          def service = "market-data:${tag}"
 
-  withPod {
-    node('pod') {
-      def tag = "${env.BRANCH_NAME}.${env.BUILD_NUMBER}"
-      def service = "market-data:${tag}"
+          checkout scm
 
-      checkout scm
+          container('docker') {
+            stage('Build') {
+              sh("cd chapter-10/market-data/ && docker build -t ${service} .")
+            }
 
-      container('docker') {
-        stage('Build') {
-          sh("docker build -t ${service} .")
-        }
+            stage('Test') {
+              try {
+                sh("docker run -v `pwd`/chapter-10/market-data:/workspace --rm ${service} python setup.py test")
+              } finally {
+                step([$class: 'JUnitResultArchiver', testResults: 'chapter-10/market-data/results.xml'])
+              }
+            }
+
+            def tagToDeploy = "jdk2588/${service}"
+
+              stage('Publish') {
+                withDockerRegistry(registry: [credentialsId: 'docker']) {
+                  sh("docker tag ${service} ${tagToDeploy}")
+                    sh("docker push ${tagToDeploy}")
+                }
+              }
+
+            stage('Deploy') {
+              sh("sed -i.bak 's#BUILD_TAG#${tagToDeploy}#' ./deploy/staging/*.yml")
+                container('kubectl') {
+                  sh("kubectl --namespace=staging apply -f deploy/staging/")
+                }
+            }
+          }
       }
     }
   }
 }
 
 def withPod(body) {
-  podTemplate(label: 'pod', serviceAccount: 'jenkins', containers: [
+  podTemplate(label: 'box', serviceAccount: 'jenkins', containers: [
       containerTemplate(name: 'docker', image: 'docker', command: 'cat', ttyEnabled: true),
       containerTemplate(name: 'kubectl', image: 'lachlanevenson/k8s-kubectl', command: 'cat', ttyEnabled: true)
   ],
@@ -30,4 +51,3 @@ def withPod(body) {
   ]
   ) { body() }
 }
-
