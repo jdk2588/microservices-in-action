@@ -30,9 +30,9 @@ node {
               }
 
             stage('Deploy') {
-              sh("sed -i.bak 's#BUILD_TAG#${tagToDeploy}#' ./deploy/staging/*.yml")
+              sh("sed -i.bak 's#BUILD_TAG#${tagToDeploy}#' ./chapter-10/deploy/staging/*.yml")
                 container('kubectl') {
-                  sh("kubectl --namespace=staging apply -f deploy/staging/")
+                  sh("kubectl --namespace=staging apply -f chapter-10/deploy/staging/")
                 }
             }
           }

@@ -38,3 +38,6 @@ spec:
             port: 8000
           initialDelaySeconds: 10
           timeoutSeconds: 15
+  selector:
+    matchLabels:
+      app: market-data
