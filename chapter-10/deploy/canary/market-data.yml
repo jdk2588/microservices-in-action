@@ -15,7 +15,7 @@ spec:
       labels:
         app: market-data
         tier: backend
-        track: stable
+        track: canary
     spec:
       containers:
       - name: market-data
