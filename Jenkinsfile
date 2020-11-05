@@ -30,15 +30,14 @@ node {
             }
 
             stage('Deploy to staging') {
-              //sh("sed -i.bak 's#BUILD_TAG#${tagToDeploy}#' ./chapter-10/deploy/staging/*.yml")
-              sh("sed -i.bak 's#BUILD_TAG#jdk2588/market-data:v2#' ./chapter-10/deploy/staging/*.yml")
+              sh("sed -i.bak 's#BUILD_TAG#${tagToDeploy}#' ./chapter-10/deploy/staging/*.yml")
                 container('kubectl') {
                   sh("kubectl --namespace=staging apply -f chapter-10/deploy/staging/ --kubeconfig=/tmp/config")
                 }
             }
 
             stage('Deploy Canary') {
-                sh("sed -i.bak 's#BUILD_TAG#jdk2588/market-data:v2#' ./chapter-10/deploy/canary/*.yml")
+                sh("sed -i.bak 's#BUILD_TAG#${tagToDeploy}#' ./chapter-10/deploy/canary/*.yml")
                   container('kubectl') {
                   sh("kubectl --namespace=production apply -f chapter-10/deploy/canary/ --kubeconfig=/tmp/config")
                 }
@@ -51,7 +50,7 @@ node {
             }
 
             stage('Deploy to production') {
-                sh("sed -i.bak 's#BUILD_TAG#jdk2588/market-data:v2#' ./chapter-10/deploy/production/*.yml")
+                sh("sed -i.bak 's#BUILD_TAG#${tagToDeploy}#' ./chapter-10/deploy/production/*.yml")
                   container('kubectl') {
                   sh("kubectl --namespace=production apply -f chapter-10/deploy/production/ --kubeconfig=/tmp/config")
                 }
