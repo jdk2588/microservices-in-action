@@ -46,7 +46,7 @@ node {
                 try {
                   input message: "Continue release ${tagToDeploy} to production?"
                 } catch (Exception e) {
-                  sh("kubectl --namespace=production apply rollout undo deployment/market-data-canary --kubeconfig=/tmp/config")
+                  sh("kubectl --namespace=canary apply rollout undo deployment/market-data-canary --kubeconfig=/tmp/config")
                 }
             }
 
