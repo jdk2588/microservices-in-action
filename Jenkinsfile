@@ -29,7 +29,7 @@ node {
               }
             }
 
-            stage('Deploy') {
+            stage('Deploy to staging') {
               //sh("sed -i.bak 's#BUILD_TAG#${tagToDeploy}#' ./chapter-10/deploy/staging/*.yml")
               sh("sed -i.bak 's#BUILD_TAG#jdk2588/market-data:v2#' ./chapter-10/deploy/staging/*.yml")
                 container('kubectl') {
@@ -37,8 +37,17 @@ node {
                 }
             }
 
-            stage('Approve release?') {
-                input message: "Release ${tagToDeploy} to production?"
+            stage('Deploy Canary') {
+                sh("sed -i.bak 's#BUILD_TAG#jdk2588/market-data:v2#' ./chapter-10/deploy/canary/*.yml")
+                  container('kubectl') {
+                  sh("kubectl --namespace=production apply -f chapter-10/deploy/canary/ --kubeconfig=/tmp/config")
+                }
+
+                try {
+                  input message: "Continue release ${tagToDeploy} to production?"
+                } catch (Exception e) {
+                  sh("kubectl --namespace=production apply rollout undo deployment/market-data-canary --kubeconfig=/tmp/config")
+                }
             }
 
             stage('Deploy to production') {
