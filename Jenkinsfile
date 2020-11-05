@@ -22,17 +22,29 @@ node {
 
             def tagToDeploy = "jdk2588/${service}"
 
-              stage('Publish') {
-                withDockerRegistry(registry: [credentialsId: 'docker']) {
-                  sh("docker tag ${service} ${tagToDeploy}")
-                    sh("docker push ${tagToDeploy}")
-                }
+            stage('Publish') {
+              withDockerRegistry(registry: [credentialsId: 'docker']) {
+                sh("docker tag ${service} ${tagToDeploy}")
+                  sh("docker push ${tagToDeploy}")
               }
+            }
 
             stage('Deploy') {
-              sh("sed -i.bak 's#BUILD_TAG#${tagToDeploy}#' ./chapter-10/deploy/staging/*.yml")
+              //sh("sed -i.bak 's#BUILD_TAG#${tagToDeploy}#' ./chapter-10/deploy/staging/*.yml")
+              sh("sed -i.bak 's#BUILD_TAG#jdk2588/market-data:v2#' ./chapter-10/deploy/staging/*.yml")
                 container('kubectl') {
                   sh("kubectl --namespace=staging apply -f chapter-10/deploy/staging/ --kubeconfig=/tmp/config")
+                }
+            }
+
+            stage('Approve release?') {
+                input message: "Release ${tagToDeploy} to production?"
+            }
+
+            stage('Deploy to production') {
+                sh("sed -i.bak 's#BUILD_TAG#jdk2588/market-data:v2#' ./chapter-10/deploy/production/*.yml")
+                  container('kubectl') {
+                  sh("kubectl --namespace=production apply -f chapter-10/deploy/production/ --kubeconfig=/tmp/config")
                 }
             }
           }
